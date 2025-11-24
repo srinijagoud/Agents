@@ -1,0 +1,384 @@
+{
+  "name": "Events workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {
+          "responseMode": "responseNodes"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -256,
+        -32
+      ],
+      "id": "db9b4e8c-6ec3-4fd5-96f2-b045e6767e51",
+      "name": "When chat message received",
+      "webhookId": "d3423fc5-1138-4f0b-93f2-7a156bc83021"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.chatInput.toLowerCase() }}",
+                    "rightValue": "space",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "10187743-ceb1-468a-8d0b-be92e4b4559e"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "0"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "ef6209a6-40e3-4121-8026-41701e11f418",
+                    "leftValue": "={{ $json.chatInput.toLowerCase() }}",
+                    "rightValue": "events",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        -48,
+        -32
+      ],
+      "id": "a96808a4-2ef3-4b26-9b20-29307946d48e",
+      "name": "Switch",
+      "alwaysOutputData": false,
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "url": "https://www.nasa.gov/rss/dyn/breaking_news.rss",
+        "options": {
+          "customFields": "=Limit : 3",
+          "ignoreSSL": true
+        }
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        160,
+        -128
+      ],
+      "id": "70acbd4c-c8cf-417e-9858-7199dd1ba381",
+      "name": "RSS Read",
+      "retryOnFail": false,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "url": "https://www.eventbrite.com/api/v3/events/search/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "networking"
+            },
+            {
+              "name": "start_date.range_start",
+              "value": "=={{ new Date().toISOString() }}"
+            },
+            {
+              "name": "start_date.range_end",
+              "value": "=={{ new Date(Date.now() + 7*24*60*60*1000).toISOString() }}"
+            },
+            {
+              "name": "sort_by",
+              "value": "date"
+            },
+            {
+              "name": "expand",
+              "value": "venue"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        160,
+        64
+      ],
+      "id": "e077f2e6-2424-4d40-80de-530d18043d7e",
+      "name": "HTTP Request",
+      "alwaysOutputData": true,
+      "credentials": {
+        "eventbriteOAuth2Api": {
+          "id": "fa8N2AzLS9D1EnD7",
+          "name": "Eventbrite account 2"
+        },
+        "httpBearerAuth": {
+          "id": "k2V0QXJ8S8ZKLFZL",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Hi, can you send me latest space news",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        368,
+        -128
+      ],
+      "id": "5f9a58d3-b183-41fa-b8ee-d04099ee8c2a",
+      "name": "AI Agent",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        624,
+        16
+      ],
+      "id": "44b0d334-4f0f-4afe-ac18-83b72bb18dbd",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "bwwty3JI87YipcZX",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        368,
+        320
+      ],
+      "id": "356ce292-f1bb-4e57-baa2-62032710d381",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "bwwty3JI87YipcZX",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "message": "={{ $node[\"AI Agent events\"].json.output }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chat",
+      "typeVersion": 1,
+      "position": [
+        704,
+        128
+      ],
+      "id": "006e9460-75b3-423e-a104-20562a8ab795",
+      "name": "Respond to Chat 1"
+    },
+    {
+      "parameters": {
+        "message": "={{ $node[\"AI Agent\"].json.output }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chat",
+      "typeVersion": 1,
+      "position": [
+        704,
+        -192
+      ],
+      "id": "453b3bfb-917b-4dd9-b022-805583f9a7f2",
+      "name": "Respond to Chat"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=List up to 3 upcoming tech events:\n{{ $json.events.slice(0,3).map(event => \n`• ${event.name.text} – ${event.start.local.split('T')[0]} in ${event.venue?.address?.locality || 'Online'}\\n  Link: ${event.url}`\n).join('\\n') || 'No events found right now.' }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        352,
+        128
+      ],
+      "id": "b3e2fa9d-7b2f-4371-8e5a-4f7332e7155d",
+      "name": "AI Agent events"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "AI Agent events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent events",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent events": {
+      "main": [
+        [
+          {
+            "node": "Respond to Chat 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "9fdc640e-5c7a-4f59-96ae-0dc59276ff64",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "533288ad207e3d5fa11072608e03232a37643cbc35e10cc5458574ac53679f01"
+  },
+  "id": "JUNtSCPKSnEext6Z",
+  "tags": []
+}
