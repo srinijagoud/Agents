@@ -1,1 +1,1 @@
-This Folder consists of all Agent worksflows of different tasks
+This Repository consists of all Agentic workflows of different tasks.
